@@ -1,34 +1,22 @@
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+
 import java.text.NumberFormat;
+
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Stack;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.Map.Entry;
+import java.util.Random;
 
 import org.graph4j.Graph;
 import org.graph4j.GraphBuilder;
 import org.graph4j.clique.DFSCliqueIterator;
-import org.graph4j.util.Clique;
 import org.graph4j.util.IntArrays;
-import org.graph4j.util.StableSet;
-import org.graph4j.util.VertexSet;
-
-import java.util.Map.Entry;
-import java.util.Random;
-import java.util.Set;
 
 import com.gurobi.gurobi.GRB;
 import com.gurobi.gurobi.GRBConstr;
@@ -38,16 +26,10 @@ import com.gurobi.gurobi.GRBLinExpr;
 import com.gurobi.gurobi.GRBModel;
 import com.gurobi.gurobi.GRBVar;
 import com.gurobi.gurobi.GRB.DoubleAttr;
-import com.gurobi.gurobi.GRB.IntParam;
-import com.gurobi.gurobi.GRB.StringAttr;
 
 public class BranchPrice {
-	// noOfClasses is the number of generated variables (-1);
-	// n is the order of the graph;
-	// m is the number of edges (the size);
-	// k is the number of clusters;
 	public static int n, m, k, noOfCreatedClasses = 0, rho = 0, Delta, k_down, k_up, p_down = -1, p_up = -1, p,
-			noOfStableSets_BK = 0, maxNoOfStableSets_BK = 20000, subproblemVerbosity = 0, poolSize = 0,
+			noOfStableSets_init = 0, maxNoOfStableSets_init = 20000, subproblemVerbosity = 0, poolSize = 0,
 			eqColNumber = -1, currentEqColNumber = -1, n_max, stagesUp = 0, stagesDown = 0;
 	public static boolean betaIsNull = true, multiple = true, verbosity = true, checkStableSets = false,
 			heuristic = false, flag = false;
@@ -61,12 +43,7 @@ public class BranchPrice {
 	public static double precisionVar = 1e-7;
 	public static double precisionOpt = 1e-9;
 	public static double precisionClassCheck = 1e-5;
-	public static double precisionBB = 1e-9;
 	public static double precisionLB = 1e-5;
-	public static double precisionBeta = 1e-7;
-	public static double upperB = 1e20;
-	public static double rootLowerB = -1e20;
-	public static double miu = n * n * n;
 
 	public static String fileName, path = "../data/EqCol/", writeLUp, writeLDown;
 
@@ -84,6 +61,7 @@ public class BranchPrice {
 		}
 	}
 
+	@SuppressWarnings("static-access")
 	public static void readFile(String dataFile) {
 		ReadGraphFromFile readGfF = new ReadGraphFromFile();
 		int[] size = readGfF.readGraphSize(dataFile);
@@ -95,6 +73,7 @@ public class BranchPrice {
 		System.out.println("Delta = " + Delta);
 	}
 
+	@SuppressWarnings("static-access")
 	public static void readFileK(String dataFile) {
 		ReadGraphFromFile readGfF = new ReadGraphFromFile();
 		int[] size = readGfF.readGraphSize(dataFile);
@@ -112,8 +91,6 @@ public class BranchPrice {
 	}
 
 	public static void generateGraph(int v, double p, int h) {
-		ReadGraphFromFile readGfF = new ReadGraphFromFile();
-		// int[] size = readGfF.readGraphSize(dataFile);
 		n = v;
 		m = 0;
 		adjacency = new boolean[n][n];
@@ -187,6 +164,7 @@ public class BranchPrice {
 		return Math.floor(val * 1000) / 1000;
 	}
 
+	@SuppressWarnings("rawtypes")
 	public static Graph buildGraph() {
 		Graph graph = GraphBuilder.numVertices(n).estimatedNumEdges(m).buildGraph();
 		for (int v = 0; v < n; v++)
@@ -197,6 +175,7 @@ public class BranchPrice {
 		return graph;
 	}
 
+	@SuppressWarnings("rawtypes")
 	public static Graph buildGraph(double[] weights) {
 		Graph graph = GraphBuilder.numVertices(n).estimatedNumEdges(m).buildGraph();
 		for (int v = 0; v < n; v++)
@@ -215,18 +194,18 @@ public class BranchPrice {
 		var graph = buildGraph();
 		colorClasses_BK = new HashMap<Integer, ColorClass>();
 		while (max != 0 && graph.numVertices() >= minSize) {
-			int first = IntArrays.min(graph.vertices()), _u = -1, k = 0;
+			int _u = -1, k = 0;
 			var cliqueIt = new DFSCliqueIterator(graph, minSize, maxSize, initialDFSTimeout);
 			int count = 0;
 			long t0 = System.currentTimeMillis();
 			int[] visited = new int[n];
-			while (count < maxStablesPerIter && cliqueIt.hasNext() && noOfStableSets_BK < maxNoOfStableSets_BK) {
+			while (count < maxStablesPerIter && cliqueIt.hasNext() && noOfStableSets_init < maxNoOfStableSets_init) {
 				ColorClass _colCls = new ColorClass(cliqueIt.next(), noOfCreatedClasses);
 				_colCls.check(adjacency, n);
 				// _colCls.toString();
 				colorClasses_BK.put(noOfCreatedClasses, _colCls);
 				noOfCreatedClasses++;
-				noOfStableSets_BK++;
+				noOfStableSets_init++;
 				Iterator<Integer> itVertex = _colCls.vertices.iterator();
 				while (itVertex.hasNext()) {
 					_node = itVertex.next();
@@ -260,6 +239,7 @@ public class BranchPrice {
 		return mapCopy;
 	}
 
+	@SuppressWarnings({ "unchecked", "unchecked" })
 	public static ArrayList<Pair>[] arrayLIntCopy(ArrayList<Pair>[] aList) {
 		// create a deep copy of aList
 		int q = aList.length;
@@ -318,7 +298,6 @@ public class BranchPrice {
 	public static void listColorClasses(HashMap<Integer, ColorClass> _colorClasses) {
 		if (_colorClasses != null) {
 			System.out.println();
-			HashMap<Integer, ColorClass> coalitionList = new HashMap<Integer, ColorClass>();
 			Iterator<Entry<Integer, ColorClass>> iterVarCoal = _colorClasses.entrySet().iterator();
 			while (iterVarCoal.hasNext()) {
 				HashMap.Entry<Integer, ColorClass> pairE = (HashMap.Entry<Integer, ColorClass>) iterVarCoal.next();
@@ -395,36 +374,6 @@ public class BranchPrice {
 			}
 	}
 
-	public static void ShowCPCProblem(int[] _vertex, int _noVertices, int _noClusters, int[] _clustersV,
-			GRBModel _model, HashMap<Integer, ColorClass> _colClList, int pbNo) throws GRBException {
-		Integer tt;
-		double val, sum;
-		int t;
-		ColorClass _colClass;
-		String path = "../data/EqCol/results/";
-		System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-		System.out.println("No of vertices: " + _noVertices + " | No of clusters: " + _noClusters);
-		System.out.print("Optimum for rmp: " + _model.get(DoubleAttr.ObjVal) + " | No of colors: "
-				+ (_noClusters - _model.get(DoubleAttr.ObjVal)));
-		System.out.println();
-		System.out.println("----------------------------------------------------------");
-		for (HashMap.Entry<Integer, ColorClass> entry : _colClList.entrySet()) {
-			tt = entry.getKey();
-			_colClass = entry.getValue(); // use key and value
-			val = _model.getVarByName("x" + tt.intValue()).get(GRB.DoubleAttr.X);
-			if (val > 1 - precisionBB) {
-				System.out.print("Coloring class: " + tt.intValue() + "|");
-				Iterator<Integer> iter = _colClass.vertices.iterator();
-				while (iter.hasNext()) {
-					t = iter.next().intValue();
-					System.out.print(" " + _vertex[t] + "(" + _clustersV[t] + ")");
-				}
-				System.out.println();
-			}
-		}
-		System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-	}
-
 	public static RMP buildRootProblem() throws GRBException {
 		// Build the initial LP model for the Equitable Coloring Problem (EqCP)
 		long rootPbBuildTime = System.nanoTime();
@@ -484,7 +433,7 @@ public class BranchPrice {
 		ArrayList<Pair> _sameCol = arrayLPairCopy(rmp.sameColNodes), _diffCol = arrayLPairCopy(rmp.diffColNodes),
 				_toDelete_u = new ArrayList<Pair>(), _toDelete_v = new ArrayList<Pair>();
 		ArrayList<Pair>[] _vertexColCl = arrayLIntCopy(rmp.vertexColCl);
-		int u = pair.from, v = pair.to, x, id, size, _noVertices = rmp.noVirtualVertices;
+		int u = pair.from, v = pair.to, x, id, _noVertices = rmp.noVirtualVertices;
 		Pair _pair;
 		ColorClass stableSet;
 		boolean found;
@@ -495,7 +444,6 @@ public class BranchPrice {
 		while (iterP.hasNext()) {
 			_pair = iterP.next();
 			id = _pair.from;
-			size = _pair.to;
 			stableSet = _colorClasses.get((Integer) id);
 			Iterator<Integer> iterV = stableSet.vertices.iterator();
 			found = false;
@@ -511,7 +459,6 @@ public class BranchPrice {
 		while (iterP.hasNext()) {
 			_pair = iterP.next();
 			id = _pair.from;
-			size = _pair.to;
 			stableSet = _colorClasses.get((Integer) id);
 			Iterator<Integer> iterV = stableSet.vertices.iterator();
 			found = false;
@@ -559,8 +506,7 @@ public class BranchPrice {
 	}
 
 	public static RMP buildRMP_AddEdge(RMP rmp, Pair pair, int noPb) throws GRBException {
-		HashMap<Integer, ColorClass> _colorClasses = hashMLCopy(rmp.colorClasses),
-				_partialCol = hashMLCopy(rmp.partialCol);
+		HashMap<Integer, ColorClass> _colorClasses = hashMLCopy(rmp.colorClasses);
 		ArrayList<Pair> _sameCol = arrayLPairCopy(rmp.sameColNodes), _diffCol = arrayLPairCopy(rmp.diffColNodes),
 				_toDelete_u = new ArrayList<Pair>(), _toAdd_u = new ArrayList<Pair>();
 		ArrayList<Pair>[] _vertexColCl = arrayLIntCopy(rmp.vertexColCl);
@@ -706,7 +652,7 @@ public class BranchPrice {
 	public static boolean[] characteristicV(ColorClass colClass, int n) {
 		boolean[] _characteristicV = new boolean[n];
 		Iterator<Integer> iter = colClass.vertices.iterator();
-		int i, t;
+		int i;
 		while (iter.hasNext()) {
 			i = iter.next().intValue();
 			_characteristicV[i] = true;
@@ -848,7 +794,6 @@ public class BranchPrice {
 
 	public static RMP addClassSelectiveCheckAll(RMP rmp, GRBModel model, ColorClass newStableSet, int verbosity,
 			double beta) throws GRBException {
-		int o = 0;
 		ColorClass currentClass;
 		if (newStableSet != null && Math.abs(beta - newStableSet.cost) > precisionClassCheck) {
 			Iterator<Entry<Integer, ColorClass>> _class = rmp.colorClasses.entrySet().iterator();
@@ -963,10 +908,9 @@ public class BranchPrice {
 		Pair pair = new Pair();
 		Iterator<Integer> _iter1, _iter2;
 		ColorClass _class1, _class2, _class;
-		int _u = -1, _v = -1, _w = -1, h, hh = -1, _bestId = -1, _id = -1, color = 0;
+		int _u = -1, _v = -1, h, hh = -1, _bestId = -1, _id = -1, color = 0;
 		int[] colors = new int[n];
 		double val, _closestToHalf = 1, _bestVal = -1;
-		boolean found = false;
 		boolean[] _class1Chr = new boolean[n], _class2Chr = new boolean[n];
 
 		GRBVar[] vars = _model.getVars();
@@ -1107,7 +1051,7 @@ public class BranchPrice {
 
 	public static void initialize() {
 		noOfCreatedClasses = 0;
-		noOfStableSets_BK = 0;
+		noOfStableSets_init = 0;
 		stackRMPb = new Stack<RMP>();
 	}
 
@@ -1130,7 +1074,7 @@ public class BranchPrice {
 		} else
 			k_up = k_down + 1;
 
-		maxStableSetsPerIteration = Math.floorDiv(maxNoOfStableSets_BK, k_down);
+		maxStableSetsPerIteration = Math.floorDiv(maxNoOfStableSets_init, k_down);
 		System.out.println("p = " + p + ", k_down = " + k_down + ", k_up = " + k_up + ", multiple: " + multiple
 				+ ", maximum no. of stable sets/iteration: " + maxStableSetsPerIteration);
 		System.out.println("Pool size: " + poolSize + " | p_down: " + p_down + " | p_up: " + p_up);
@@ -1138,7 +1082,7 @@ public class BranchPrice {
 		BKTime = System.nanoTime();
 		stableSetIterator(k_down, k_up, maxStableSetsPerIteration);
 		System.out.println("BK time: " + formSec((System.nanoTime() - BKTime) * 1e-9)
-				+ " | number of stable sets (BK) = " + noOfStableSets_BK);
+				+ " | number of stable sets (BK) = " + noOfStableSets_init);
 
 		RMP rmp = buildRootProblem();
 		stackRMPb.add(rmp);
@@ -1224,7 +1168,7 @@ public class BranchPrice {
 	}
 
 	public static int searchEqChromatic_down(String fileName) throws GRBException, IOException, InterruptedException {
-		int p_0 = p_down, p_1 = searchUpBound(p_0, p_up), t;
+		int p_0 = p_down, p_1 = searchUpBound(p_0, p_up);
 		System.out.println("Down-coming");
 		long time, totalTime = System.nanoTime();
 		while (p_1 <= p_up) {
@@ -1375,92 +1319,9 @@ public class BranchPrice {
 
 	public static void main(String[] args) throws GRBException, IOException, InterruptedException {
 
-		// Eligible files: "r1000.5.col"; "le450_25c.col"; "mulsol.i.2.col";
-		// "dsjc250.5.col";"dsjc250.1.col" (?); "dsjc500.5.col" (mai greu);
-		// "dsjc500.9.col" (?); "inithx.i.2.col" (greu? fii); "inithx.i.3.col"
-		// (greu? fii); "flat300_28_0.col" (out of memory fii); "flat1000_60_0.col"
-		// (greu fii); "wap07a.col" (greu fii); "wap08a.col" (out of memory fii);
-		// "wap04a.col" (out of memory fii); "wap03a.col" (out of memory fii from the
-		// begining/BK reduced to 20000 but still very slow);"wap02a.col" (out of memory
-		// fii from the
-		// begining/BK reduced to 20000 but still very slow); "DSJR500.5.col" (out of
-		// memory fii);
-
-		// closed instances:
-		// "flat300_28_0.col": [11 - 33]: 11, 12, ..., 27 out, 28?,..., 32?
-		// "dsjc250.5.col": [12 - 29]: 12, 13,..., 25 out, 26?,
-		// "dsjc250.1.col": [5 - 8]: 5 out, 6?
-		// "mulsol.i.2.col": [34 - 36]: 34, 35 out, 36 in
-		// "le450_25c.col": [25 - 26]: 25 out, 26?
-		// "le450_25d.col": [25 - 26]: 25 out, 26?
-		// simplified
-		// "inithx.i.2.col": [31 - 35]: 31, 32, 33, 34 out, 35?
-		// "inithx.i.3.col": [31 - 35]: 31, 32, 33, 34, 35 out
-		// "dsjr500.5.col": [120 - 125]: 120, 121, out, 122 in
-
-		// "dsjc500.1.col": [5 - 13]: 5, 6? 12?
-		// "dsjc1000.9.col": [126 - 251]: 126, ..., 215 out 216? **///
-
-		// "wap06a.col": [40 - 41]: 40?
-		// "DSJC500.5.col" 13 52
-		// "dsjc125.5.col"; 9 18
-		// "dsjc1000.1.col";
-		// "dsjc500.9.col";// "dsjc250.1.col";//"le450_25d.col";// "dsjc250.5.col";//
-		// "le450_25d.col";//
-		// "inithx.i.2.col";//
-		// "dsjc500.9.col";//
-		// "1-Insertions_6.col";//
-		// "mulsol.i.2.col";//
-		// "DSJR500.5.col";//
-		// "wap02a.col";// "flat1000_60_0.col";//
-		// "inithx.i.3.col";//
-		// "DSJC500.1.col";//
-		// "le450_25c.col";// "r1000.5.col";//
-		// "latin_square_10.col";//
-		// "DSJC500.9.col";// "dsjc500.9.col";// "flat300_28_0.col";//
-		// "dsjc1000.9.col";//
-		// "dsjc250.1.col";//
-		// "dsjc125.5.col";// "dsjc250.1.col"; //
-		// "1-FullIns_3.col";//
-
-		// *************
-
-		// "r1000.5.col": 201/ unfinished// 235*
-		// "le450_25c.col": 16 unfinished
-		// "le450_25d.col": ?
-		// "dsjc250.1.col": 6 unfinished
-		// "dsjc250.5.col": 26 unfinished
-		// "dsjc500.1.col": 6 unfinished
-		// "dsjc500.5.col": 36 unfinished
-		// "dsjc500.9.col": 123? unfinished
-		// "dsjc1000.1.col": 6 unfinished
-		// "dsjc1000.5.col": 17, unfinished
-		// "dsjc1000.9.col": 201, unfinished
-		// "dsjr500.5.col": 120, 121, unfinished
-		// "inithx.i.2.col"; 34, unfinished + 35 (liniar);
-		// "inithx.i.3.col"; 4, unfinished;
-		// "1-Insertions_6.col": ? unfinished
-		// "2-Insertions_5.col": ? unfinished
-		// "3-Insertions_5.col": -, -
-		// "mulsol.i.2.col": 36 ??
-		// "latin_square_10.col": - -
-		// "flat300_28_0.col": 28, unfinished
-		// "wap01a.col": -, -
-		// "wap03a.col": -, -
-		// "wap04a.col": 18, unfinished
-		// "wap07a.col": 26, unfinished
-		// "wap08a.col": 15, unfinished
-		// "flat1000_50_0.col": 11, unfinished
-		// "flat1000_60_0.col": 11, unfinished
-		// "flat1000_76_0.col": ?, unfinished
-		// "C2000.5.col": 11, unfinished
-
-		// *************
-
-		fileName = "r1000.5.col";
+		fileName = "dsjc250.1.col";
 		createDir(path + "results/" + fileName);
 		readFile(fileName);
-		// createFile(path + "results/finalSolutions.txt");
 
 		stagesUp = 0;
 		stagesDown = 0;
@@ -1469,20 +1330,18 @@ public class BranchPrice {
 		verbosity = false;
 
 		subproblemVerbosity = 0;
-		checkStableSets = false;
 
 		// milliseconds:
-		sleepTime = 5000;
 		timeout = 5000;
-		initialDFSTimeout = 1000;
+		initialDFSTimeout = 1000;// 1 second
 		minTimeUp = 1000000000;
 		maxTimeUp = -1;
 
-		noOfStableSets_BK = 0;
-		maxNoOfStableSets_BK = 10000;
+		noOfStableSets_init = 0;
+		maxNoOfStableSets_init = 10000;
 
-		p_down = 3;
-		p_up = 249;
+		p_down = 5;
+		p_up = 8;
 
 		// searchEqChromatic_down(fileName);
 		searchEqChromatic_up(fileName);
