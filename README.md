@@ -8,9 +8,9 @@ This repository contains two Java implementations of optimization algorithms for
 ```
 project/
 │
-├── src/                      # The .java source files
 ├── bin/                      # Compiled .class files (CuttingPlane.class, BranchPrice.class)
 └── lib/                      # The libraries required: gurobi.jar, graph4j-1.0.8.jar, etc.
+├── src/                      # The .java source files
 └── run.bat                   # Utility file for running the algorithms in Windows
 └── run.sh                    # Utility file for running the algorithms in Linux
 │
@@ -48,4 +48,17 @@ chmod +x run.sh
 - **Gurobi Optimizer 13**
     - Must be installed and licensed.
     - Gurobi Java bindings must be correctly set in your environment.
- 
+
+Windows:
+
+```
+GUROBI_HOME="C:\Apps\gurobi1300\win64"    # Modify path accordingly
+PATH="%PATH%;%GUROBI_HOME%\bin"
+```
+
+Linux:
+
+```
+GUROBI_HOME="/opt/gurobi1300/linux64"     # Modify path accordingly
+PATH="$PATH:$GUROBI_HOME/bin"
+```
