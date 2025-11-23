@@ -35,17 +35,19 @@ run.bat BranchPrice le450_25c.col     # Windows
 
 ```
 
-If running on Linux make sure run.sh is executable: 
+If running on Linux, make sure run.sh is executable: 
 
 ```
 chmod +x run.sh
 
 ```
 
+Benchmark instances can be obtained at: [https://mat.tepper.cmu.edu/COLOR02/INSTANCES](https://mat.tepper.cmu.edu/COLOR02/INSTANCES)
+
 
 # Requirements
-- **Java 11 or newer**
-- **Gurobi Optimizer 13**
+- [Java 11](https://www.oracle.com/java/technologies/downloads/) or newer
+- [Gurobi Optimizer 13](https://www.gurobi.com/solutions/gurobi-optimizer/)
     - Must be installed and licensed.
     - Gurobi Java bindings must be correctly set in your environment.
 
