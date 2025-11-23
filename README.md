@@ -14,7 +14,7 @@ project/
 └── run.bat                   # Utility file for running the algorithms in Windows
 └── run.sh                    # Utility file for running the algorithms in Linux
 │
-data/
+data/                         # not included
 │
 └── EqCol/
     ├── instances/            # Input .col files
