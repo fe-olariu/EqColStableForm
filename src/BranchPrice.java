@@ -1232,14 +1232,23 @@ public class BranchPrice {
 	}
 
 	public static void main(String[] args) throws GRBException, IOException, InterruptedException {
-		// "C2000.9.col": unfinished; "C2000.5.col":?
+		
+		fileName = "le450_25c.col";
+		/*
+		if (args.length == 0) {
+			System.err.println("Please specify the filename.");
+			return;
+		}
+		fileName = args[0];
+		*/
+		
 		timeLimit = 4;// in hours
-		n_max = 300000;
+		n_max = 300000;		
 		subproblemVerbosity = 0;
 		direction_up = true;
 
-		fileName = "le450_25c.col";
-		createDir(path + "results/" + fileName);
+		System.out.println(new File(path + "results/" + fileName).getCanonicalPath());
+		createDir(path + "results");
 		readFile(fileName);
 		stages = 0;
 		p_down = 3;

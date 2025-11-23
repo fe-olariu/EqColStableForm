@@ -786,13 +786,21 @@ public class CuttingPlane {
 
 	public static void main(String[] args) throws GRBException, IOException, InterruptedException {
 
-		verbosity = 0;
-		timeLimit = 4;// hours latin_square_10.col
-
 		fileName = "dsjc250.5.col";
+		/*
+		if (args.length == 0) {
+			System.err.println("Please specify the filename.");
+			return;
+		}
+		fileName = args[0];
+		*/
+		
+		verbosity = 0;
+		timeLimit = 4;// hours
+
 		initialize();
 		chi_UpperBound = 29;
-		createDir(path + "results/" + fileName);
+		createDir(path + "results");
 		readFile(fileName);
 		cuttingPlaneAlg();
 
