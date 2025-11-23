@@ -11,8 +11,8 @@ project/
 ├── src/                      # The .java source files
 ├── bin/                      # Compiled .class files (CuttingPlane.class, BranchPrice.class)
 └── lib/                      # The libraries required: gurobi.jar, grah4j.jar, etc.
-└── run.bat                   # Utility file for running the algorithm in Windows
-└── run.sh                    # Utility file for running the algorithm in Linux
+└── run.bat                   # Utility file for running the algorithms in Windows
+└── run.sh                    # Utility file for running the algorithms in Linux
 │
 data/
 │

@@ -1233,14 +1233,12 @@ public class BranchPrice {
 
 	public static void main(String[] args) throws GRBException, IOException, InterruptedException {
 		
-		fileName = "le450_25c.col";
-		/*
+		//fileName = "le450_25c.col";		
 		if (args.length == 0) {
 			System.err.println("Please specify the filename.");
 			return;
 		}
-		fileName = args[0];
-		*/
+		fileName = args[0];		
 		
 		timeLimit = 4;// in hours
 		n_max = 300000;		

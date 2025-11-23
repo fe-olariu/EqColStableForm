@@ -786,14 +786,12 @@ public class CuttingPlane {
 
 	public static void main(String[] args) throws GRBException, IOException, InterruptedException {
 
-		fileName = "dsjc250.5.col";
-		/*
+		//fileName = "dsjc250.5.col";		
 		if (args.length == 0) {
 			System.err.println("Please specify the filename.");
 			return;
 		}
-		fileName = args[0];
-		*/
+		fileName = args[0];		
 		
 		verbosity = 0;
 		timeLimit = 4;// hours
